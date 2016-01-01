@@ -7,7 +7,7 @@ valid_commands = [
     '!echo {message} - Echoes the message back.'
 ]
 
-help_text = ', it seems you need help.\nFor now, these are the chat commands:\n```\n{}```'.format('{0}', '\n'.join(valid_commands))
+help_text = ', it seems you need help.\nFor now, these are the chat commands:\n```\n{}```'.format('\n'.join(valid_commands))
 
 client = discord.Client()
 client.login(os.environ['DISCORD_BOT_USER'], os.environ['DISCORD_BOT_PASS'])
