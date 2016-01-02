@@ -3,6 +3,8 @@ import os
 import random
 import asyncio
 
+print(os.name)
+
 if not discord.opus.is_loaded():
     discord.opus.load_opus('opus.dll')
 
