@@ -7,7 +7,7 @@ print(os.name)
 
 if not discord.opus.is_loaded():
     if os.name != 'nt':
-        discord.opus.load_opus('/app/lib/lib/libopus.so.0')
+        discord.opus.load_opus('/app/lib/opus/lib/libopus.so.0')
     else:
         discord.opus.load_opus('opus.dll')
 
