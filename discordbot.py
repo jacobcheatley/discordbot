@@ -3,8 +3,6 @@ import os
 import random
 import asyncio
 
-print(os.name)
-
 if not discord.opus.is_loaded():
     if os.name != 'nt':
         discord.opus.load_opus('/app/lib/opus/lib/libopus.so.0.5.1')
@@ -20,8 +18,7 @@ valid_commands = [
     '!queue {youtube url} - Adds a youtube song to the jukebox queue.'
 ]
 
-help_text = 'it seems you need help.\nFor now, these are the chat commands:\n```\n{}```'.format(
-    '\n'.join(valid_commands))
+help_text = 'it seems you need help.\nFor now, these are the chat commands:\n```\n{}```'.format('\n'.join(valid_commands))
 coin_flips = ['Heads', 'Tails']
 
 next_song_format = 'Now playing {0.url} from {0.requester.mention}'
@@ -47,7 +44,7 @@ class DankBot(discord.Client):
         while True:
             self.play_next_song.clear()
             self.current = await self.song_queue.get()
-            self.player = self.voice.create_ytdl_player(self.current.url, after=self.goto_next_song)
+            self.player = self.voice.create_ytdl_player(self.current.url, after=self.goto_next_song, options='--ffmpeg-location /app')
             self.player.start()
             await self.send_message(self.current.channel, next_song_format.format(self.current))
             await self.play_next_song.wait()
