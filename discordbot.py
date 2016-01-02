@@ -3,14 +3,14 @@ import os
 import goslate
 
 gs = goslate.Goslate()
-langs = gs.get_languages()
+langs = sorted(gs.get_languages().items(), key=lambda t: t[1])
 
 # Constants:
 valid_commands = [
     '!help - Displays this help.',
     '!echo {message} - Echoes the message back.',
     '!translate {to} - Translates the message in whatever language to the chosen language.',
-    '!langauges - See a list of langauges '
+    '!languages - See a list of languages '
 ]
 
 help_text = ', it seems you need help.\nFor now, these are the chat commands:\n```\n{}```'.format('\n'.join(valid_commands))
@@ -43,7 +43,7 @@ def on_message(message):
         client.send_message(message.channel, gs.translate(content, lang))
 
     if message.content.startswith('!languages'):
-        client.send_message(message.channel, ', '.join(['{}: {}'.format(k, v) for (k, v) in langs.items()]))
+        client.send_message(message.channel, ', '.join(['{}: {}'.format(k, v) for (k, v) in langs]))
 
 
 @client.event
