@@ -1,10 +1,16 @@
 import discord
 import os
+import goslate
+
+gs = goslate.Goslate()
+langs = gs.get_languages()
 
 # Constants:
 valid_commands = [
     '!help - Displays this help.',
-    '!echo {message} - Echoes the message back.'
+    '!echo {message} - Echoes the message back.',
+    '!translate {to} - Translates the message in whatever language to the chosen language.',
+    '!langauges - See a list of langauges '
 ]
 
 help_text = ', it seems you need help.\nFor now, these are the chat commands:\n```\n{}```'.format('\n'.join(valid_commands))
@@ -29,6 +35,15 @@ def on_message(message):
 
     if message.content.startswith('!help'):
         client.send_message(message.channel, message.author.mention() + help_text)
+
+    if message.content.startswith('!translate'):
+        parts = message.content.split(' ')
+        lang = parts[1]
+        content = ' '.join(parts[2:])
+        client.send_message(message.channel, gs.translate(content, lang))
+
+    if message.content.startswith('!languages'):
+        client.send_message(message.channel, ', '.join(['{}: {}'.format(k, v) for (k, v) in langs.items()]))
 
 
 @client.event
