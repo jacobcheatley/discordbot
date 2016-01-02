@@ -4,7 +4,7 @@ import random
 import asyncio
 
 if not discord.opus.is_loaded():
-    discord.opus.load_opus('opus.dll')
+    discord.opus.load_opus('opus')
 
 # Constants:
 valid_commands = [
