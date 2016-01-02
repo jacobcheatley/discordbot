@@ -6,7 +6,10 @@ import asyncio
 print(os.name)
 
 if not discord.opus.is_loaded():
-    discord.opus.load_opus('opus.dll')
+    if os.name != 'nt':
+        discord.opus.load_opus('libopus.so.0')
+    else:
+        discord.opus.load_opus('opus.dll')
 
 # Constants:
 valid_commands = [
