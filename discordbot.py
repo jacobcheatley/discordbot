@@ -13,7 +13,6 @@ def ydl_hook(d):
 if not discord.opus.is_loaded():
     if os.name != 'nt':
         discord.opus.load_opus('/app/lib/opus/lib/libopus.so.0.5.1')
-        os.environ['PATH'] = '/app'
     else:
         discord.opus.load_opus('opus.dll')
 
