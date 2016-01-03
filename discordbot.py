@@ -7,10 +7,10 @@ import youtube_dl
 if not discord.opus.is_loaded():
     if os.name != 'nt':
         discord.opus.load_opus('/app/lib/opus/lib/libopus.so.0.5.1')
-        ytdl_options = '--ffmpeg-location /app -x --buffer-size 4096 --socket-timeout 3 --retries 20 --prefer-insecure'
+        ytdl_options = {'ffmpeg-location': '/app', 'buffer-size': '4096', 'socket-timeout': '3', 'retries': '20'}
     else:
         discord.opus.load_opus('opus.dll')
-        ytdl_options = '-x --buffer-size 4096 --socket-timeout 3 --retries 20 --prefer-insecure'
+        ytdl_options = {'buffer-size': '4096', 'socket-timeout': '3', 'retries': '20'}
 
 # Constants:
 valid_commands = [
