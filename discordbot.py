@@ -7,7 +7,7 @@ import youtube_dl
 if not discord.opus.is_loaded():
     if os.name != 'nt':
         discord.opus.load_opus('/app/lib/opus/lib/libopus.so.0.5.1')
-        os.environ['PATH'] = '/app'
+        os.environ['PATH'] += ';/app'
         ytdl_options = {'ffmpeg_location': '/app', 'buffer_size': '4096', 'socket_timeout': '3', 'retries': '20'}
     else:
         discord.opus.load_opus('opus.dll')
