@@ -1,1 +1,1 @@
-worker: sudo python discordbot.py
+worker: python discordbot.py
