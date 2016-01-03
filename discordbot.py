@@ -4,14 +4,35 @@ import random
 import asyncio
 import youtube_dl
 
+
+# Set up downloader and opus
+def ydl_hook(d):
+    if d['status'] == 'finished':
+        print('Downloaded')
+
 if not discord.opus.is_loaded():
     if os.name != 'nt':
         discord.opus.load_opus('/app/lib/opus/lib/libopus.so.0.5.1')
         os.environ['PATH'] = '/app'
-        ytdl_options = {'ffmpeg_location': '/app', 'buffer_size': '4096', 'socket_timeout': '3', 'retries': '20'}
     else:
         discord.opus.load_opus('opus.dll')
-        ytdl_options = {'buffer_size': '4096', 'socket_timeout': '3', 'retries': '20'}
+
+
+ydl_options = {'buffer_size': 4096,
+               'socket_timeout': 3,
+               'retries': 20,
+               'format': 'bestaudio/best',
+               'postprocessors': [{
+                   'key': 'FFmpegExtractAudio',
+                   'preferredcodec': 'mp3'
+               }],
+               'progress_hooks': [ydl_hook],
+               'outtmpl': '%(id)s.%(ext)s',
+               'restrict_filenames': True,
+               'get_filename': True
+               }
+
+yt_downloader = youtube_dl.YoutubeDL(ydl_options)
 
 # Constants:
 valid_commands = [
@@ -26,13 +47,15 @@ help_text = 'it seems you need help.\nFor now, these are the chat commands:\n```
     '\n'.join(valid_commands))
 coin_flips = ['Heads', 'Tails']
 
-next_song_format = 'Now playing {0.url} from {0.requester.mention}'
+next_song_format = 'Now playing {0.title} from {0.requester.mention}'
 
 
+# Classes:
 class SongEntry:
-    def __init__(self, url, message):
-        self.url = url
-        self.requester = message.author
+    def __init__(self, filename, title, requester):
+        self.filename = filename
+        self.title = title
+        self.requester = requester
 
 
 class DankBot(discord.Client):
@@ -50,10 +73,10 @@ class DankBot(discord.Client):
             self.play_next_song.clear()
             self.current = await self.song_queue.get()
             try:
-                self.player = self.voice.create_ytdl_player(self.current.url, after=self.goto_next_song, options=ytdl_options)
+                self.player = self.voice.create_ffmpeg_player(self.current.filename)
                 self.player.start()
                 await self.send_message(self.jukebox_text_channel, next_song_format.format(self.current))
-            except youtube_dl.DownloadError:
+            except:  # TODO: MAKE THIS NOT STUPID
                 self.goto_next_song()
                 await self.send_message(self.jukebox_text_channel, 'Woops I can\'t play this song lmao.')
             await self.play_next_song.wait()
@@ -91,13 +114,26 @@ class DankBot(discord.Client):
 
         if message.content.startswith('!queue') and self.setup and message.channel == self.jukebox_text_channel:
             url = message.content[6:].strip()
-            await self.song_queue.put(SongEntry(url, message))
-            await self.send_message(message.channel, 'Adding song to queue.')
+            with yt_downloader:
+                try:
+                    await self.send_message(message.channel, 'Adding song to queue.')
+                    info = yt_downloader.extract_info(url, download=False)
+                    filename = '{0}.mp3'.format(info.get('id', None))
+                    title = info.get('title', None)
+                    if not os.path.isfile(filename):
+                        yt_downloader.download([url])
+                    await self.song_queue.put(SongEntry(filename, title, message.author))
+                except youtube_dl.DownloadError:
+                    await self.send_message(message.channel, 'Failed to download song.')
+                # except:
+                #     raise
+                #     await self.send_message(message.channel, 'Invalid URL.')
 
     async def on_member_join(self, member):
         server = member.server
         self.send_message(server, 'Welcome {0} to {1.name}!'.format(member.mention, server))
 
 
+# Run:
 bot = DankBot()
 bot.run(os.environ['DISCORD_BOT_USER'], os.environ['DISCORD_BOT_PASS'])
