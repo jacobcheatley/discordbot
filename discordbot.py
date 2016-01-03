@@ -72,9 +72,9 @@ class DankBot(discord.Client):
             self.play_next_song.clear()
             self.current = await self.song_queue.get()
             try:
-                self.player = self.voice.create_ffmpeg_player(self.current.filename)
-                self.player.start()
+                self.player = self.voice.create_ffmpeg_player(self.current.filename, after=self.goto_next_song)
                 await self.send_message(self.jukebox_text_channel, next_song_format.format(self.current))
+                self.player.start()
             except:  # TODO: MAKE THIS NOT STUPID
                 self.goto_next_song()
                 await self.send_message(self.jukebox_text_channel, 'Woops I can\'t play this song lmao.')
