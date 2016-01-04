@@ -60,3 +60,5 @@ target/
 
 .idea/
 *.mp3
+*.exe
+.env

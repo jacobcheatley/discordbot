@@ -3,6 +3,7 @@ import os
 import youtube_dl
 import config
 from collections import OrderedDict
+from chatterbotapi import ChatterBotFactory, ChatterBotType
 
 # Constants:
 ydl_options = {'buffer_size': 4096,
@@ -19,6 +20,7 @@ ydl_options = {'buffer_size': 4096,
                }
 yt_downloader = youtube_dl.YoutubeDL(ydl_options)
 next_song_format = 'Now playing {0.title} from {0.requester.mention}'
+factory = ChatterBotFactory()
 
 
 class CommandInfo:
@@ -30,6 +32,11 @@ class CommandInfo:
     def __str__(self):
         return '{0}- {1}'.format('' if self.args == '' else self.args + ' ', self.docs)
 
+
+class BotConversationInfo:
+    def __init__(self, session, channel):
+        self.session = session
+        self.channel = channel
 
 def help_text(author):
     commands_display = '\n'.join(
@@ -90,6 +97,23 @@ async def eightball(bot=None, message=None, admin=False, args=None):
         'Outlook not so good',
         'Very doubtful'
     ]))
+
+
+async def start_convo(bot=None, message=None, admin=False, args=None):
+    if message.author.id in bot.conversations:
+        return
+    await bot.send_message(message.channel, 'Starting a conversation with {}.'.format(message.author.mention))
+    chatter_bot = factory.create(ChatterBotType.CLEVERBOT)
+    chatter_bot_session = chatter_bot.create_session()
+    bot.conversations[message.author.id] = BotConversationInfo(chatter_bot_session, message.channel)
+
+
+async def end_convo(bot=None, message=None, admin=False, args=None):
+    if message.author.id not in bot.conversations:
+        return
+    await bot.send_message(message.channel, 'Ending a conversation with {}.'.format(message.author.mention))
+    bot.conversations.pop(message.author.id)
+
 
 # region Audio
 class SongEntry:
@@ -154,6 +178,8 @@ commands = OrderedDict([
     ('roll', CommandInfo(roll, '{number}', 'Rolls an n sided die (default 6).')),
     ('flip', CommandInfo(flip, '', 'Flips a coin.')),
     ('8ball', CommandInfo(eightball, '{query}', 'The Magic 8 Ball has the answers to all questions.')),
+    ('startconversation', CommandInfo(start_convo, '', 'Starts a conversation with the bot.')),
+    ('endconversation', CommandInfo(end_convo, '', 'Ends your conversation with the bot.'))
     # ('queue', CommandInfo(queue, '{youtube url}', 'Adds a YouTube song to the Jukebox queue.')),
     # ('setup', CommandInfo(setup, '', 'Sets up the Jukebox, admin only.'))
 ])

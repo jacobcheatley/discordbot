@@ -21,14 +21,21 @@ class DankBot(discord.Client):
         self.player = None
         self.jukebox_text_channel = None
         self.setup_done = False
+        self.conversations = {}
 
     async def on_message(self, message):
-        if message.author.id == self.user.id or not message.content.startswith(config.prefix):
+        author_id = message.author.id
+
+        if author_id == self.user.id:
             return
 
-        admin = message.author.id in config.admins
-
-        await botcommands.command(self, message, admin)
+        if (author_id in self.conversations and
+                not message.content.startswith(config.prefix) and
+                self.conversations[author_id].channel == message.channel):
+            await self.send_message(message.channel, self.conversations[author_id].session.think(message.content))
+        elif message.content.startswith(config.prefix):
+            admin = author_id in config.admins
+            await botcommands.command(self, message, admin)
 
     async def on_member_join(self, member):
         server = member.server
