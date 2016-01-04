@@ -1,10 +1,13 @@
-#TODO
-!remindme {time} {message} - send private messages in return
-!wiki {term} - display link to wikipedia page
-!define {word} - displays definition of word
-!uptime - display time bot has been running
+#IMPORTANT:
+Remove **all** music stuff
 
-Queue functionality:
- - enable !setup and !queue only on new jukebox text channel
- - verify valid youtube video url
- - post now playing to jukebox text channel instead of origin message
+#Modify commands:
+Timeout for conversations - auto end in 2 minutes
+
+#User commands:
+!google {search} - give link to first result in google search
+!wiki {search} - give link to first result in wikipedia search
+
+#Admin commands:
+!join {invite link} - join invite server
+!leave - leave current server

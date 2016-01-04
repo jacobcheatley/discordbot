@@ -1,27 +1,10 @@
 import random
-import os
 import youtube_dl
 import config
 from collections import OrderedDict
 from chatterbotapi import ChatterBotFactory, ChatterBotType
 import time
-import discord.utils
 
-# Constants:
-ydl_options = {'buffer_size': 4096,
-               'socket_timeout': 3,
-               'retries': 20,
-               'format': 'bestaudio/best',
-               'postprocessors': [{
-                   'key': 'FFmpegExtractAudio',
-                   'preferredcodec': 'mp3'
-               }],
-               'outtmpl': '%(id)s.%(ext)s',
-               'restrict_filenames': True,
-               'get_filename': True
-               }
-yt_downloader = youtube_dl.YoutubeDL(ydl_options)
-next_song_format = 'Now playing {0.title} from {0.requester.mention}'
 factory = ChatterBotFactory()
 
 
@@ -133,6 +116,45 @@ async def uptime(bot=None, message=None, args=None):
     await bot.send_message(message.channel, 'Bot has been up for ' + time_display)
 
 
+def segment_length(text, seperators):
+    if len(text) < 2000:
+        return len(text)
+
+    for sep in seperators:
+        pos = text.rfind(sep, 0, 1995)
+        if pos != -1:
+            return pos
+
+    return 2000
+
+async def send_long(bot, channel, text):
+    text_blocks = text.split('```')
+    in_code_block = True if text.startswith('```') else False
+    for text_part in text_blocks:
+        while text_part:
+            length = segment_length(text_part, ['\n', '"', '.'])
+            await bot.send_message(channel, '{0}{1}{0}'.format('```' if in_code_block else '', text_part[:length]))
+            text_part = text_part[length:]
+        in_code_block = not in_code_block
+
+
+async def paste(bot=None, message=None, args=None):
+    import urllib.request
+    from urllib.request import urlopen
+    from urllib.parse import urlparse
+    url = urlparse(args[1])
+    new_url = ''.join(['http://' if url.scheme == '' else url.scheme + '://',
+                       url.netloc,
+                       '/raw' if not url.path.startswith('/raw') else '',
+                       url.path])
+    try:
+        with urlopen(new_url) as response:
+            html = response.read()
+            await send_long(bot, message.channel, html.decode('utf-8'))
+    except urllib.request.URLError:
+        pass
+
+
 async def clear(bot=None, message=None, args=None):
     try:
         n = int(args[1])
@@ -147,60 +169,6 @@ async def clear(bot=None, message=None, args=None):
             deleted += 1
             await bot.delete_message(message)
 
-# region Old Audio
-# class SongEntry:
-#     def __init__(self, filename, title, requester):
-#         self.filename = filename
-#         self.title = title
-#         self.requester = requester
-#
-#
-# async def setup(bot=None, message=None, admin=False, args=None):
-#     if admin and not bot.setup_done:
-#         bot.setup_done = True
-#         bot.jukebox_text_channel = message.channel
-#         await bot.join_voice_channel(message.author.voice_channel)
-#         await song_loop(bot)
-#
-#
-# async def queue(bot=None, message=None, admin=False, args=None):
-#     if not bot.setup_done:
-#         return
-#
-#     try:
-#         url = args[1].split('&')[0]
-#         with yt_downloader:
-#             try:
-#                 await bot.send_message(message.channel, 'Adding song to queue.')
-#                 info = yt_downloader.extract_info(url, download=False)
-#                 filename = '{0}.mp3'.format(info.get('id', None))
-#                 title = info.get('title', None)
-#                 if not os.path.isfile(filename):
-#                     yt_downloader.download([url])
-#                 await bot.song_queue.put(SongEntry(filename, title, message.author))
-#             except youtube_dl.DownloadError:
-#                 await bot.send_message(message.channel, 'Failed to download song.')
-#     except IndexError:
-#         pass
-#
-#
-# async def song_loop(bot):
-#     while True:
-#         bot.play_next_song.clear()
-#         bot.current = await bot.song_queue.get()
-#         try:
-#             bot.player = bot.voice.create_ffmpeg_player(bot.current.filename, after=goto_next_song(bot))
-#             await bot.send_message(bot.jukebox_text_channel, next_song_format.format(bot.current))
-#             bot.player.start()
-#         except:  # TODO: MAKE THIS NOT STUPID
-#             goto_next_song(bot)
-#             await bot.send_message(bot.jukebox_text_channel, 'Woops I can\'t play this song lmao.')
-#         await bot.play_next_song.wait()
-#
-#
-# def goto_next_song(bot):
-#     bot.loop.call_soon_threadsafe(bot.play_next_song.set)
-# endregion
 
 commands = OrderedDict([
     ('help', CommandInfo(help_disp, '', 'Displays this help text.')),
@@ -212,13 +180,13 @@ commands = OrderedDict([
     ('uptime', CommandInfo(uptime, '', 'Displays bot uptime.')),
     ('startconversation', CommandInfo(start_convo, '', 'Starts a conversation with the bot.')),
     ('endconversation', CommandInfo(end_convo, '', 'Ends your conversation with the bot.')),
-    # ('queue', CommandInfo(queue, '{youtube url}', 'Adds a YouTube song to the Jukebox queue.')),
-    # ('setup', CommandInfo(setup, '', 'Sets up the Jukebox, admin only.'))
 ])
 
 admin_commands = OrderedDict([
     ('clear', CommandInfo(clear, '{number}', 'Clears n bot messages in channel.')),
+    ('paste', CommandInfo(paste, '{pastebin url}', 'Pastes the text of the pastebin.')),
 ])
+
 
 async def command(bot, message, admin):
     args = message.content.replace(config.prefix, '', 1).split(' ')

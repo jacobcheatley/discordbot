@@ -1,6 +1,5 @@
 import discord
 import os
-import asyncio
 import botcommands
 import config
 import time
@@ -9,12 +8,6 @@ import time
 class DankBot(discord.Client):
     def __init__(self, **options):
         super().__init__(**options)
-        self.song_queue = asyncio.Queue()
-        self.play_next_song = asyncio.Event()
-        self.current = None
-        self.player = None
-        self.jukebox_text_channel = None
-        self.setup_done = False
         self.conversations = {}
         self.start_time = time.time()
 
@@ -36,13 +29,6 @@ class DankBot(discord.Client):
 
 
 if __name__ == '__main__':
-    # Set up downloader and opus
-    if not discord.opus.is_loaded():
-        if os.name != 'nt':
-            discord.opus.load_opus('/app/lib/opus/lib/libopus.so.0.5.1')
-        else:
-            discord.opus.load_opus('opus.dll')
-
     # Run:
     bot = DankBot()
     bot.run(os.environ['DISCORD_BOT_USER'], os.environ['DISCORD_BOT_PASS'])
