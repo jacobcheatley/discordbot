@@ -3,13 +3,7 @@ import os
 import asyncio
 import botcommands
 import config
-
-# Set up downloader and opus
-if not discord.opus.is_loaded():
-    if os.name != 'nt':
-        discord.opus.load_opus('/app/lib/opus/lib/libopus.so.0.5.1')
-    else:
-        discord.opus.load_opus('opus.dll')
+import time
 
 
 class DankBot(discord.Client):
@@ -22,6 +16,7 @@ class DankBot(discord.Client):
         self.jukebox_text_channel = None
         self.setup_done = False
         self.conversations = {}
+        self.start_time = time.time()
 
     async def on_message(self, message):
         author_id = message.author.id
@@ -40,6 +35,14 @@ class DankBot(discord.Client):
         self.send_message(server, 'Welcome {0} to {1.name}!'.format(member.mention, server))
 
 
-# Run:
-bot = DankBot()
-bot.run(os.environ['DISCORD_BOT_USER'], os.environ['DISCORD_BOT_PASS'])
+if __name__ == '__main__':
+    # Set up downloader and opus
+    if not discord.opus.is_loaded():
+        if os.name != 'nt':
+            discord.opus.load_opus('/app/lib/opus/lib/libopus.so.0.5.1')
+        else:
+            discord.opus.load_opus('opus.dll')
+
+    # Run:
+    bot = DankBot()
+    bot.run(os.environ['DISCORD_BOT_USER'], os.environ['DISCORD_BOT_PASS'])
