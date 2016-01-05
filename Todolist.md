@@ -3,6 +3,7 @@
 ##Modify commands:
 Timeout for conversations - auto end in 1 minute
 Make conversations private messages.
+Convert all commands to new system
 
 ##User commands:
 !google {search} - give link to first result in google search

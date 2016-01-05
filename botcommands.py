@@ -23,7 +23,7 @@ class BotConversationInfo:
         self.channel = channel
 
 
-# User:
+# region User
 def help_text(author, command_dict):
     commands_display = '\n'.join(
         ['{0}{1} {2}'.format(config.prefix, key, str(value)) for (key, value) in command_dict.items()])
@@ -35,8 +35,19 @@ async def help_disp(bot=None, message=None, args=None):
     await bot.send_message(message.channel, help_text(message.author, commands))
 
 
-async def whomai(bot=None, message=None, args=None):
-    await bot.send_message(message.channel, message.author.id)
+def user_info(member):
+    return 'Info about {0.name} ({0.status}):\n' \
+           'ID: {0.id}\n' \
+           'Joined at: {0.joined_at}\n' \
+           'Roles: {1}'.format(member, ', '.join(str(role) for role in member.roles[1:]))
+
+
+async def whoami(bot=None, message=None, args=None):
+    await bot.send_message(message.channel, user_info(message.author))
+
+
+async def whois(bot=None, message=None, args=None):
+    await bot.send_message(message.channel, user_info(message.mentions[0]))
 
 
 async def echo(bot=None, message=None, args=None):
@@ -114,22 +125,21 @@ async def uptime(bot=None, message=None, args=None):
                                          '' if minutes == 0 else str(minutes) + ' minutes, ',
                                          str(seconds) + ' seconds.')
     await bot.send_message(message.channel, 'Bot has been up for ' + time_display)
+# endregion
 
-
-# Admin:
+# region Admin
 async def admin_help(bot=None, message=None, args=None):
     await bot.send_message(message.channel, help_text(message.author, admin_commands))
 
 
-def segment_length(text, separators):
+def segment_length(text):
     if len(text) < 2000:
         return len(text)
 
-    for sep in separators:
+    for sep in '\n".':
         pos = text.rfind(sep, 0, 1995)
         if pos != -1:
             return pos
-
     return 2000
 
 
@@ -138,7 +148,7 @@ async def send_long(bot, channel, text):
     in_code_block = True if text.startswith('```') else False
     for text_part in text_blocks:
         while text_part:
-            length = segment_length(text_part, ['\n', '"', '.'])
+            length = segment_length(text_part)
             await bot.send_message(channel, '{0}{1}{0}'.format('```' if in_code_block else '', text_part[:length]))
             text_part = text_part[length:]
         in_code_block = not in_code_block
@@ -203,11 +213,13 @@ async def unlimit(bot=None, message=None, args=None):
 
 async def unlimit_all(bot=None, message=None, args=None):
     bot.limited_users.clear()
+# endregion
 
 
 commands = OrderedDict([
     ('help', CommandInfo(help_disp, '', 'Displays this help text.')),
-    ('whoami', CommandInfo(whomai, '', 'Gives your user ID.')),
+    ('whoami', CommandInfo(whoami, '', 'Gives some info about yourself.')),
+    ('whois', CommandInfo(whois, '{user mention}', 'Gives some info about the user.')),
     ('echo', CommandInfo(echo, '{message}', 'Echoes the message back.')),
     ('roll', CommandInfo(roll, '{number}', 'Rolls an n sided die (default 6).')),
     ('flip', CommandInfo(flip, '', 'Flips a coin.')),
