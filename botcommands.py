@@ -1,5 +1,4 @@
 import random
-import youtube_dl
 import config
 from collections import OrderedDict
 from chatterbotapi import ChatterBotFactory, ChatterBotType
@@ -24,15 +23,16 @@ class BotConversationInfo:
         self.channel = channel
 
 
-def help_text(author):
+# User:
+def help_text(author, command_dict):
     commands_display = '\n'.join(
-        ['{0}{1} {2}'.format(config.prefix, key, str(value)) for (key, value) in commands.items()])
+        ['{0}{1} {2}'.format(config.prefix, key, str(value)) for (key, value) in command_dict.items()])
     return '{0}, it seems you need help.\nFor now, these are the chat commands:\n```\n{1}```'.format(author.mention,
                                                                                                      commands_display)
 
 
 async def help_disp(bot=None, message=None, args=None):
-    await bot.send_message(message.channel, help_text(message.author))
+    await bot.send_message(message.channel, help_text(message.author, commands))
 
 
 async def whomai(bot=None, message=None, args=None):
@@ -116,16 +116,22 @@ async def uptime(bot=None, message=None, args=None):
     await bot.send_message(message.channel, 'Bot has been up for ' + time_display)
 
 
-def segment_length(text, seperators):
+# Admin:
+async def admin_help(bot=None, message=None, args=None):
+    await bot.send_message(message.channel, help_text(message.author, admin_commands))
+
+
+def segment_length(text, separators):
     if len(text) < 2000:
         return len(text)
 
-    for sep in seperators:
+    for sep in separators:
         pos = text.rfind(sep, 0, 1995)
         if pos != -1:
             return pos
 
     return 2000
+
 
 async def send_long(bot, channel, text):
     text_blocks = text.split('```')
@@ -136,6 +142,21 @@ async def send_long(bot, channel, text):
             await bot.send_message(channel, '{0}{1}{0}'.format('```' if in_code_block else '', text_part[:length]))
             text_part = text_part[length:]
         in_code_block = not in_code_block
+
+
+async def clear(bot=None, message=None, args=None):
+    try:
+        n = int(args[1])
+    except:
+        n = 10
+    logs = await bot.logs_from(message.channel)
+    deleted = 0
+    for message in logs:
+        if deleted >= n:
+            return
+        if message.author.id == bot.user.id:
+            deleted += 1
+            await bot.delete_message(message)
 
 
 async def paste(bot=None, message=None, args=None):
@@ -155,19 +176,33 @@ async def paste(bot=None, message=None, args=None):
         pass
 
 
-async def clear(bot=None, message=None, args=None):
-    try:
-        n = int(args[1])
-    except:
-        n = 10
-    logs = await bot.logs_from(message.channel)
-    deleted = 0
-    for message in logs:
-        if deleted > n:
-            return
-        if message.author.id == bot.user.id:
-            deleted += 1
-            await bot.delete_message(message)
+async def stop_all(bot=None, message=None, args=None):
+    await bot.send_message(message.channel, "Ending all conversations.")
+    bot.conversations.clear()
+
+
+async def deactivate(bot=None, message=None, args=None):
+    bot.active = False
+
+
+async def activate(bot=None, message=None, args=None):
+    bot.active = True
+
+
+async def limit(bot=None, message=None, args=None):
+    for member in message.mentions:
+        print('Limited', member.name)
+        bot.limited_users.add(member.id)
+
+
+async def unlimit(bot=None, message=None, args=None):
+    for member in message.mentions:
+        print('Unlimited', member.name)
+        bot.limited_users.discard(member.id)
+
+
+async def unlimit_all(bot=None, message=None, args=None):
+    bot.limited_users.clear()
 
 
 commands = OrderedDict([
@@ -183,8 +218,15 @@ commands = OrderedDict([
 ])
 
 admin_commands = OrderedDict([
+    ('adminhelp', CommandInfo(admin_help, '', 'Displays this admin help text.')),
     ('clear', CommandInfo(clear, '{number}', 'Clears n bot messages in channel.')),
     ('paste', CommandInfo(paste, '{pastebin url}', 'Pastes the text of the pastebin.')),
+    ('stopall', CommandInfo(stop_all, '', 'Stops all conversations.')),
+    ('deactivate', CommandInfo(deactivate, '', 'Deactivates the bot.')),
+    ('activate', CommandInfo(activate, '', 'Activates the bot.')),
+    ('limit', CommandInfo(limit, '{user mentions...}', 'Disables the users from giving commands.')),
+    ('unlimit', CommandInfo(unlimit, '{user mentions...}', 'Enables the users to get commands again.')),
+    ('unlimitall', CommandInfo(unlimit_all, '', 'Enables all users to use commands again.')),
 ])
 
 

@@ -10,15 +10,17 @@ class DankBot(discord.Client):
         super().__init__(**options)
         self.conversations = {}
         self.start_time = time.time()
+        self.active = True
+        self.limited_users = set()
 
     async def on_message(self, message):
         author_id = message.author.id
+        admin = author_id in config.admins
 
-        if author_id == self.user.id:
+        if author_id == self.user.id or (not admin and not self.active) or author_id in self.limited_users:
             return
 
         if message.content.startswith(config.prefix):
-            admin = author_id in config.admins
             await botcommands.command(self, message, admin)
         elif author_id in self.conversations and self.conversations[author_id].channel == message.channel:
             await self.send_message(message.channel, self.conversations[author_id].session.think(message.content))
