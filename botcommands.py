@@ -136,6 +136,21 @@ async def admin_help(message=None, args=None):
     await bot.send_message(message.channel, help_text(message.author, admin_commands))
 
 
+async def clear(message=None, args=None):
+    try:
+        n = int(args[1])
+    except:
+        n = 10
+    logs = await bot.logs_from(message.channel)
+    deleted = 0
+    for message in logs:
+        if message.author.id == bot.user.id:
+            deleted += 1
+            await bot.delete_message(message)
+        if deleted >= n:
+            return
+
+
 def segment_length(text):
     if len(text) < 2000:
         return len(text)
@@ -158,21 +173,6 @@ async def send_long(channel, text):
         in_code_block = not in_code_block
 
 
-async def clear(message=None, args=None):
-    try:
-        n = int(args[1])
-    except:
-        n = 10
-    logs = await bot.logs_from(message.channel)
-    deleted = 0
-    for message in logs:
-        if deleted >= n:
-            return
-        if message.author.id == bot.user.id:
-            deleted += 1
-            await bot.delete_message(message)
-
-
 async def paste(message=None, args=None):
     import urllib.request
     from urllib.request import urlopen
@@ -185,7 +185,7 @@ async def paste(message=None, args=None):
     try:
         with urlopen(new_url) as response:
             html = response.read()
-            await send_long(bot, message.channel, html.decode('utf-8'))
+            await send_long(message.channel, html.decode('utf-8'))
     except urllib.request.URLError:
         pass
 
@@ -219,6 +219,16 @@ async def unlimit_all(message=None, args=None):
     bot.limited_users.clear()
 
 
+async def eval_command(message=None, args=None):
+    str_to_eval = ' '.join(args[1:]).replace('`', '')
+    print(str_to_eval)
+    try:
+        result = eval(str_to_eval)
+        print(result)
+        await bot.send_message(message.channel, result)
+    except Exception as e:
+        await bot.send_message(message.author, e)
+
 # endregion
 
 
@@ -245,6 +255,7 @@ admin_commands = OrderedDict([
     ('limit', CommandInfo(limit, '{user mentions...}', 'Disables the users from giving commands.')),
     ('unlimit', CommandInfo(unlimit, '{user mentions...}', 'Enables the users to get commands again.')),
     ('unlimitall', CommandInfo(unlimit_all, '', 'Enables all users to use commands again.')),
+    ('eval', CommandInfo(eval_command, '{expression}', 'Evaluates a Python 3.5 expression.')),
 ])
 
 
