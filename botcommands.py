@@ -21,6 +21,7 @@ class BotConversationInfo:
     def __init__(self, session, channel):
         self.session = session
         self.channel = channel
+        self.last_message_time = time.time()
 
 
 # region User

@@ -23,7 +23,13 @@ class DankBot(discord.Client):
         if message.content.startswith(config.prefix):
             await botcommands.command(self, message, admin)
         elif author_id in self.conversations and self.conversations[author_id].channel == message.channel:
-            await self.send_message(message.channel, self.conversations[author_id].session.think(message.content))
+            if self.conversations[author_id].last_message_time + config.convo_time_out < time.time():
+                # Timed out
+                self.conversations.pop(author_id)
+            else:
+                # Not timed out
+                self.conversations[author_id].last_message_time = time.time()
+                await self.send_message(message.channel, self.conversations[author_id].session.think(message.content))
 
     async def on_member_join(self, member):
         server = member.server
