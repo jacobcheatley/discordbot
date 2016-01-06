@@ -5,6 +5,7 @@ from chatterbotapi import ChatterBotFactory, ChatterBotType
 import time
 
 factory = ChatterBotFactory()
+bot = None
 
 
 class CommandInfo:
@@ -32,7 +33,7 @@ def help_text(author, command_dict):
                                                                                                      commands_display)
 
 
-async def help_disp(bot=None, message=None, args=None):
+async def help_disp(message=None, args=None):
     await bot.send_message(message.channel, help_text(message.author, commands))
 
 
@@ -43,22 +44,22 @@ def user_info(member):
            'Roles: {1}'.format(member, ', '.join(str(role) for role in member.roles[1:]))
 
 
-async def whoami(bot=None, message=None, args=None):
+async def whoami(message=None, args=None):
     await bot.send_message(message.channel, user_info(message.author))
 
 
-async def whois(bot=None, message=None, args=None):
+async def whois(message=None, args=None):
     await bot.send_message(message.channel, user_info(message.mentions[0]))
 
 
-async def echo(bot=None, message=None, args=None):
+async def echo(message=None, args=None):
     try:
         await bot.send_message(message.channel, ' '.join(args[1:]))
     except IndexError:
         pass
 
 
-async def roll(bot=None, message=None, args=None):
+async def roll(message=None, args=None):
     try:
         n = int(args[1])
     except:  # ayy lmao general exception
@@ -68,11 +69,11 @@ async def roll(bot=None, message=None, args=None):
         await bot.send_message(message.channel, 'Rolled {0}'.format(roll))
 
 
-async def flip(bot=None, message=None, args=None):
+async def flip(message=None, args=None):
     await bot.send_message(message.channel, random.choice(['Heads', 'Tails']))
 
 
-async def eightball(bot=None, message=None, args=None):
+async def eightball(message=None, args=None):
     await bot.send_message(message.channel, random.choice([
         'It is certain',
         'It is decidedly so',
@@ -97,7 +98,7 @@ async def eightball(bot=None, message=None, args=None):
     ]))
 
 
-async def start_convo(bot=None, message=None, args=None):
+async def start_convo(message=None, args=None):
     if message.author.id in bot.conversations:
         return
     await bot.send_message(message.channel, 'Starting a conversation with {}.'.format(message.author.mention))
@@ -106,14 +107,14 @@ async def start_convo(bot=None, message=None, args=None):
     bot.conversations[message.author.id] = BotConversationInfo(chatter_bot_session, message.channel)
 
 
-async def end_convo(bot=None, message=None, args=None):
+async def end_convo(message=None, args=None):
     if message.author.id not in bot.conversations:
         return
     await bot.send_message(message.channel, 'Ending a conversation with {}.'.format(message.author.mention))
     bot.conversations.pop(message.author.id)
 
 
-async def uptime(bot=None, message=None, args=None):
+async def uptime(message=None, args=None):
     seconds = int(time.time() - bot.start_time)
     days = seconds // 86400
     seconds -= days * 86400
@@ -126,10 +127,12 @@ async def uptime(bot=None, message=None, args=None):
                                          '' if minutes == 0 else str(minutes) + ' minutes, ',
                                          str(seconds) + ' seconds.')
     await bot.send_message(message.channel, 'Bot has been up for ' + time_display)
+
+
 # endregion
 
 # region Admin
-async def admin_help(bot=None, message=None, args=None):
+async def admin_help(message=None, args=None):
     await bot.send_message(message.channel, help_text(message.author, admin_commands))
 
 
@@ -144,7 +147,7 @@ def segment_length(text):
     return 2000
 
 
-async def send_long(bot, channel, text):
+async def send_long(channel, text):
     text_blocks = text.split('```')
     in_code_block = True if text.startswith('```') else False
     for text_part in text_blocks:
@@ -155,7 +158,7 @@ async def send_long(bot, channel, text):
         in_code_block = not in_code_block
 
 
-async def clear(bot=None, message=None, args=None):
+async def clear(message=None, args=None):
     try:
         n = int(args[1])
     except:
@@ -170,7 +173,7 @@ async def clear(bot=None, message=None, args=None):
             await bot.delete_message(message)
 
 
-async def paste(bot=None, message=None, args=None):
+async def paste(message=None, args=None):
     import urllib.request
     from urllib.request import urlopen
     from urllib.parse import urlparse
@@ -187,33 +190,35 @@ async def paste(bot=None, message=None, args=None):
         pass
 
 
-async def stop_all(bot=None, message=None, args=None):
+async def stop_all(message=None, args=None):
     await bot.send_message(message.channel, "Ending all conversations.")
     bot.conversations.clear()
 
 
-async def deactivate(bot=None, message=None, args=None):
+async def deactivate(message=None, args=None):
     bot.active = False
 
 
-async def activate(bot=None, message=None, args=None):
+async def activate(message=None, args=None):
     bot.active = True
 
 
-async def limit(bot=None, message=None, args=None):
+async def limit(message=None, args=None):
     for member in message.mentions:
         print('Limited', member.name)
         bot.limited_users.add(member.id)
 
 
-async def unlimit(bot=None, message=None, args=None):
+async def unlimit(message=None, args=None):
     for member in message.mentions:
         print('Unlimited', member.name)
         bot.limited_users.discard(member.id)
 
 
-async def unlimit_all(bot=None, message=None, args=None):
+async def unlimit_all(message=None, args=None):
     bot.limited_users.clear()
+
+
 # endregion
 
 
@@ -243,12 +248,12 @@ admin_commands = OrderedDict([
 ])
 
 
-async def command(bot, message, admin):
+async def command(message, admin):
     args = message.content.replace(config.prefix, '', 1).split(' ')
     admin_command_info = admin_commands.get(args[0], None) if admin else None
     command_info = commands.get(args[0], None)
 
     if admin_command_info is not None:
-        await admin_command_info.func(bot=bot, message=message, args=args)
+        await admin_command_info.func(message=message, args=args)
     elif command_info is not None:
-        await command_info.func(bot=bot, message=message, args=args)
+        await command_info.func(message=message, args=args)

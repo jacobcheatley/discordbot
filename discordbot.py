@@ -21,7 +21,7 @@ class DankBot(discord.Client):
             return
 
         if message.content.startswith(config.prefix):
-            await botcommands.command(self, message, admin)
+            await botcommands.command(message, admin)
         elif author_id in self.conversations and self.conversations[author_id].channel == message.channel:
             if self.conversations[author_id].last_message_time + config.convo_time_out < time.time():
                 # Timed out
@@ -39,4 +39,5 @@ class DankBot(discord.Client):
 if __name__ == '__main__':
     # Run:
     bot = DankBot()
+    botcommands.bot = bot
     bot.run(os.environ['DISCORD_BOT_USER'], os.environ['DISCORD_BOT_PASS'])
