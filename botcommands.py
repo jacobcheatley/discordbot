@@ -129,6 +129,27 @@ async def uptime(message=None, args=None):
     await bot.send_message(message.channel, 'Bot has been up for ' + time_display)
 
 
+async def lenny(message=None, args=None):
+    lennies = ['( ͡° ͜ʖ ͡°)', '\\\\(ꗞ ͟ʖꗞ)/', '(ง⍤□⍤)ง', '[x╭╮x]', '(⚆ ͜ʖ⚆)', '\\\\( º  ͟ʖ º )/', '(  つ ಠ ڡ ಠ C )',
+               '( ͡°( ͡° ͜ʖ( ͡° ͜ʖ ͡°)ʖ ͡°) ͡°)', '┬┴┬┴┤ ͜ʖ ͡°) ├┬┴┬┴', '( ͡°╭͜ʖ╮͡° )',
+               '[̲̅$̲̅(̲̅ ͡° ͜ʖ ͡°̲̅)̲̅$̲̅]', '/╲/\\\\╭( ͡° ͡° ͜ʖ ͡° ͡°)╮/\\\\╱\\\\', '༼ つ  ͡° ͜ʖ ͡° ༽つ', '( ͡ᵔ ͜ʖ ͡ᵔ )',
+               '( ಠ ͜ʖರೃ)', '\\\\( ͠°ᗝ °)/', '( ͠°╭͜ʖ╮ °)', '\\\\( ͠° ͜ʖ °)/', '( ͡°ᴥ ͡°)', '( ͡° ͟ʖ ͡°)', '乁(૦ઁ╭͜ʖ╮૦ઁ)ㄏ',
+               '乁(๏‿‿๏)ㄏ', '(⌐■ ͜ʖ■)', '($ ͜ʖ$)', '\\\\(ಠ_ಠ)/']
+    try:
+        lenny_num = int(args[1])
+        try:
+            await bot.send_message(message.channel, lennies[lenny_num - 1])
+        except IndexError:
+            await bot.send_message(message.channel, 'Number out of range (1-{}).'.format(len(lennies)))
+    except IndexError:
+        if random.random() < 0.25:
+            await bot.send_message(message.channel, lennies[0])
+        else:
+            await bot.send_message(message.channel, random.choice(lennies[1:]))
+    except ValueError:
+        await bot.send_message(message.channel, 'Not a valid integer.')
+
+
 # endregion
 
 # region Admin
@@ -221,13 +242,11 @@ async def unlimit_all(message=None, args=None):
 
 async def eval_command(message=None, args=None):
     str_to_eval = ' '.join(args[1:]).replace('`', '')
-    print(str_to_eval)
     try:
-        result = eval(str_to_eval)
-        print(result)
-        await bot.send_message(message.channel, result)
+        await bot.send_message(message.channel, eval(str_to_eval))
     except Exception as e:
         await bot.send_message(message.author, e)
+
 
 # endregion
 
@@ -237,12 +256,13 @@ commands = OrderedDict([
     ('whoami', CommandInfo(whoami, '', 'Gives some info about yourself.')),
     ('whois', CommandInfo(whois, '{user mention}', 'Gives some info about the user.')),
     ('echo', CommandInfo(echo, '{message}', 'Echoes the message back.')),
-    ('roll', CommandInfo(roll, '{number}', 'Rolls an n sided die (default 6).')),
+    ('roll', CommandInfo(roll, '{number (optional)}', 'Rolls an n sided die.')),
     ('flip', CommandInfo(flip, '', 'Flips a coin.')),
     ('8ball', CommandInfo(eightball, '{query}', 'The Magic 8 Ball has the answers to all questions.')),
     ('uptime', CommandInfo(uptime, '', 'Displays bot uptime.')),
     ('startconversation', CommandInfo(start_convo, '', 'Starts a conversation with the bot.')),
     ('endconversation', CommandInfo(end_convo, '', 'Ends your conversation with the bot.')),
+    ('lenny', CommandInfo(lenny, '{number (optional)}', '( ͡° ͜ʖ ͡°)')),
 ])
 
 admin_commands = OrderedDict([
