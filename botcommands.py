@@ -3,8 +3,12 @@ import config
 from collections import OrderedDict
 from chatterbotapi import ChatterBotFactory, ChatterBotType
 import time
+import re
+import wolframalpha
+import os
 
 factory = ChatterBotFactory()
+wolfram_client = wolframalpha.Client(os.environ['WOLFRAM_ID'])
 bot = None
 
 
@@ -60,13 +64,16 @@ async def echo(message=None, args=None):
 
 
 async def roll(message=None, args=None):
+    dice_string = message.content[6:].replace(' ', '')
+    dice_pattern = r"^(\d*)d(\d+)(?:(\+|-)(\d+))?"
     try:
-        n = int(args[1])
-    except:  # ayy lmao general exception
-        n = 6
-    if n > 0:
-        roll = random.randint(1, n)
-        await bot.send_message(message.channel, 'Rolled {0}'.format(roll))
+        num_dice, size, sign, mod = re.findall(dice_pattern, dice_string)[0]
+        dice_roll = sum((random.randint(1 if int(size) else 0, int(size)) for _ in range(int(num_dice or 1))))
+        constant = eval('{}{}'.format(sign, mod)) if mod else 0
+        await bot.send_message(message.channel, 'Rolled {} = {}'.format(num_dice + 'd' + size + sign + mod, dice_roll + constant))
+    except Exception as e:
+        print(e)
+        await bot.send_message(message.channel, 'Invalid dice format (NdX+C)')
 
 
 async def flip(message=None, args=None):
@@ -149,6 +156,14 @@ async def lenny(message=None, args=None):
     except ValueError:
         await bot.send_message(message.channel, 'Not a valid integer.')
 
+
+async def wolfram(message=None, args=None):
+    query_string = message.content[9:]
+    result = wolfram_client.query(query_string)
+    pod_texts = []
+    for pod in result.pods:
+        pod_texts.append('**{0.title}**\n{0.img}'.format(pod))
+    await send_long(message.channel, '\n'.join(pod_texts))
 
 # endregion
 
@@ -256,13 +271,14 @@ commands = OrderedDict([
     ('whoami', CommandInfo(whoami, '', 'Gives some info about yourself.')),
     ('whois', CommandInfo(whois, '{user mention}', 'Gives some info about the user.')),
     ('echo', CommandInfo(echo, '{message}', 'Echoes the message back.')),
-    ('roll', CommandInfo(roll, '{number (optional)}', 'Rolls an n sided die.')),
+    ('roll', CommandInfo(roll, '{dice}', 'Rolls dice in the format NdX+C.')),
     ('flip', CommandInfo(flip, '', 'Flips a coin.')),
     ('8ball', CommandInfo(eightball, '{query}', 'The Magic 8 Ball has the answers to all questions.')),
     ('uptime', CommandInfo(uptime, '', 'Displays bot uptime.')),
     ('startconversation', CommandInfo(start_convo, '', 'Starts a conversation with the bot.')),
     ('endconversation', CommandInfo(end_convo, '', 'Ends your conversation with the bot.')),
     ('lenny', CommandInfo(lenny, '{number (optional)}', '( ͡° ͜ʖ ͡°)')),
+    ('wolfram', CommandInfo(wolfram, '{query}', 'Queries Wolfram Alpha'))
 ])
 
 admin_commands = OrderedDict([

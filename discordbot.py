@@ -31,10 +31,6 @@ class DankBot(discord.Client):
                 self.conversations[author_id].last_message_time = time.time()
                 await self.send_message(message.channel, self.conversations[author_id].session.think(message.content))
 
-    async def on_member_join(self, member):
-        server = member.server
-        self.send_message(server, 'Welcome {0} to {1.name}!'.format(member.mention, server))
-
 
 if __name__ == '__main__':
     # Run:
