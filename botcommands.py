@@ -158,12 +158,15 @@ async def lenny(message=None, args=None):
 
 
 async def wolfram(message=None, args=None):
-    query_string = message.content[9:]
-    result = wolfram_client.query(query_string)
-    pod_texts = []
-    for pod in result.pods:
-        pod_texts.append('**{0.title}**\n{0.img}'.format(pod))
-    await send_long(message.channel, '\n'.join(pod_texts))
+    if message.channel.name in config.allowed_spam_channels:
+        query_string = message.content[9:]
+        result = wolfram_client.query(query_string)
+        pod_texts = []
+        for pod in result.pods:
+            pod_texts.append('**{0.title}**\n{0.img}'.format(pod))
+        await send_long(message.channel, '\n'.join(pod_texts))
+    else:
+        await bot.send_message(message.author, "Try {} for the Wolfram command.".format(' or '.join(('#' + chan for chan in config.allowed_spam_channels))))
 
 # endregion
 
